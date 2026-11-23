@@ -1,18 +1,72 @@
-<script>
-
 /****************************************************
- DATU SASAK MARKET
- script.html
+ DATU SASAK MARKET - script.js
 ****************************************************/
 
+/*=========================================
+ PENGHUBUNG KE APPS SCRIPT
+ Tempel URL Web App (berakhiran /exec) di bawah ini.
+ Bagian ini menggantikan google.script.run, jadi
+ semua kode di bawahnya tidak perlu diubah.
+=========================================*/
+
+const API_URL = "PASTE_URL_WEB_APP_DISINI/exec";
+
+function createRunner(onOk, onFail){
+
+    return new Proxy({}, {
+
+        get: function(_, name){
+
+            if(name === "withSuccessHandler"){
+                return function(fn){ return createRunner(fn, onFail); };
+            }
+
+            if(name === "withFailureHandler"){
+                return function(fn){ return createRunner(onOk, fn); };
+            }
+
+            return function(){
+
+                const args = Array.prototype.slice.call(arguments);
+
+                const url = API_URL +
+                    "?aksi=" + encodeURIComponent(String(name)) +
+                    "&args=" + encodeURIComponent(JSON.stringify(args));
+
+                fetch(url)
+                .then(function(r){ return r.json(); })
+                .then(function(res){ if(onOk) onOk(res); })
+                .catch(function(err){
+
+                    console.error(err);
+
+                    if(onFail){
+                        onFail(err);
+                    }else{
+                        alert("Gagal memuat data. Coba refresh halaman.");
+                    }
+
+                });
+
+            };
+
+        }
+
+    });
+
+}
+
+const google = { script: { run: createRunner(null, null) } };
+
+
+/*=========================================
+ VARIABLE
+=========================================*/
+
 let currentPage = "home";
-
 let currentData = [];
-
 let filteredData = [];
-
 let currentMenu = "";
-
 let websiteConfig = {};
 
 // Pagination
@@ -33,13 +87,9 @@ INITIALIZE
 function initialize(){
 
     bindNavigation();
-
     bindSearch();
-
     loadWebMenu();
-
     loadHome();
-
     hideLoading();
 
 }
@@ -59,10 +109,6 @@ function hideLoading(){
 
 }
 
-/*=========================================
-LOADING MENU
-=========================================*/
-
 function showLoading(){
 
     document.getElementById("app").innerHTML=`
@@ -80,6 +126,7 @@ function showLoading(){
     `;
 
 }
+
 
 /*=========================================
 NAVIGATION
@@ -99,9 +146,7 @@ function bindNavigation(){
 
             btn.classList.add("active");
 
-            const page=btn.dataset.page;
-
-            navigate(page);
+            navigate(btn.dataset.page);
 
         };
 
@@ -109,66 +154,21 @@ function bindNavigation(){
 
 }
 
-
 function navigate(page){
 
     currentPage=page;
 
     switch(page){
 
-        case "info":
-
-            loadInfo();
-
-        break;
-
-        case "home":
-
-            loadHome();
-
-        break;
-
-        case "akun":
-
-            loadAkun();
-
-        break;
-
-        case "equipment":
-
-            loadEquipment();
-
-        break;
-
-        case "matmed":
-
-            loadMatmed();
-
-        break;
-
-        case "mutiara":
-
-            loadMutiara();
-
-        break;
-
-        case "batu":
-
-            loadBatu();
-
-        break;
-
-        case "jasa":
-
-            loadJasa();
-
-        break;
-
-        case "blacklist":
-
-            loadBlacklist();
-
-        break;
+        case "info": loadInfo(); break;
+        case "home": loadHome(); break;
+        case "akun": loadAkun(); break;
+        case "equipment": loadEquipment(); break;
+        case "matmed": loadMatmed(); break;
+        case "mutiara": loadMutiara(); break;
+        case "batu": loadBatu(); break;
+        case "jasa": loadJasa(); break;
+        case "blacklist": loadBlacklist(); break;
 
     }
 
@@ -190,7 +190,6 @@ function bindSearch(){
     });
 
 }
-
 
 function searchLocal(keyword){
 
@@ -216,7 +215,9 @@ HOME
 =========================================*/
 
 function loadHome(){
+
     showLoading();
+
     google.script.run
 
     .withSuccessHandler(function(res){
@@ -229,7 +230,6 @@ function loadHome(){
 
 }
 
-
 function renderHome(data){
 
     document.getElementById("app").innerHTML=`
@@ -237,59 +237,38 @@ function renderHome(data){
     <div class="dashboard">
 
         <div class="dashboard-card">
-
             <h2>Ready, Jual Akun</h2>
-
             <h1>${data.akun}</h1>
-
         </div>
 
         <div class="dashboard-card">
-
             <h2>Equipment</h2>
-
             <h1>${data.equipment}</h1>
-
         </div>
 
         <div class="dashboard-card">
-
             <h2>MatMed</h2>
-
             <h1>${data.matmed}</h1>
-
         </div>
 
         <div class="dashboard-card">
-
             <h2>Mutiara</h2>
-
             <h1>${data.mutiara}</h1>
-
         </div>
 
         <div class="dashboard-card">
-
             <h2>MatStarry</h2>
-
             <h1>${data.batu}</h1>
-
         </div>
 
         <div class="dashboard-card">
-
             <h2>Jasa Perantara JB</h2>
-
             <h1>${data.jasa}</h1>
-
         </div>
 
         <div class="dashboard-card">
-
             <h2>Blacklist Penipu</h2>
-
             <h1>${data.blacklist}</h1>
-
         </div>
 
     </div>
@@ -307,57 +286,19 @@ function renderCurrent(){
 
     switch(currentMenu){
 
-        case "info":
-
-            renderInfo(filteredData);
-
-        break;
-
-        case "akun":
-
-            renderAkun(filteredData);
-
-        break;
-
-        case "equipment":
-
-            renderEquipment(filteredData);
-
-        break;
-
-        case "matmed":
-
-            renderMatmed(filteredData);
-
-        break;
-
-        case "mutiara":
-
-            renderMutiara(filteredData);
-
-        break;
-
-        case "batu":
-
-            renderBatu(filteredData);
-
-        break;
-
-        case "jasa":
-
-            renderJasa(filteredData);
-
-        break;
-
-        case "blacklist":
-
-            renderBlacklist(filteredData);
-
-        break;
+        case "info": renderInfo(filteredData); break;
+        case "akun": renderAkun(filteredData); break;
+        case "equipment": renderEquipment(filteredData); break;
+        case "matmed": renderMatmed(filteredData); break;
+        case "mutiara": renderMutiara(filteredData); break;
+        case "batu": renderBatu(filteredData); break;
+        case "jasa": renderJasa(filteredData); break;
+        case "blacklist": renderBlacklist(filteredData); break;
 
     }
 
 }
+
 
 /*=========================================
 PAGINATION
@@ -366,9 +307,8 @@ PAGINATION
 function getPageData(data){
 
     const start = (currentPaginationPage - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
 
-    return data.slice(start,end);
+    return data.slice(start, start + ITEMS_PER_PAGE);
 
 }
 
@@ -425,8 +365,9 @@ function changePage(page){
 
 }
 
+
 /*=========================================
-LOAD MENU
+LOAD MENU (HEADER + LINK WHATSAPP)
 =========================================*/
 
 function loadWebMenu(){
@@ -436,17 +377,13 @@ function loadWebMenu(){
     .withSuccessHandler(function(res){
 
         const d = res.data;
+
         websiteConfig = d;
 
-        // ==========================
         // HEADER WEBSITE
-        // ==========================
+        document.querySelector(".logo h1").innerHTML = d.NAMA_LAPAK;
 
-        document.querySelector(".logo h1").innerHTML =
-        d.NAMA_LAPAK;
-
-        document.querySelector(".logo small").innerHTML =
-        d.SUB_LAPAK;
+        document.querySelector(".logo small").innerHTML = d.SUB_LAPAK;
 
         let icon = document.querySelector(".logo-icon");
 
@@ -467,10 +404,7 @@ function loadWebMenu(){
 
         }
 
-        // ==========================
         // WHATSAPP FOOTER
-        // ==========================
-
         const wa = "https://wa.me/" + d.NO_WA;
 
         document.getElementById("waTitip").href =
@@ -520,10 +454,17 @@ KERUGIAN YANG DI TIMBULKAN :`
 
 }
 
+
+/*=========================================
+LOAD DATA PER MENU
+=========================================*/
+
 function loadAkun(){
 
     currentMenu="akun";
+    currentPaginationPage = 1;
     showLoading();
+
     google.script.run
     .withSuccessHandler(function(res){
 
@@ -542,6 +483,7 @@ function loadEquipment(){
     currentMenu="equipment";
     currentPaginationPage = 1;
     showLoading();
+
     google.script.run
     .withSuccessHandler(function(res){
 
@@ -560,6 +502,7 @@ function loadMatmed(){
     currentMenu="matmed";
     currentPaginationPage = 1;
     showLoading();
+
     google.script.run
     .withSuccessHandler(function(res){
 
@@ -578,6 +521,7 @@ function loadMutiara(){
     currentMenu="mutiara";
     currentPaginationPage = 1;
     showLoading();
+
     google.script.run
     .withSuccessHandler(function(res){
 
@@ -596,6 +540,7 @@ function loadBatu(){
     currentMenu="batu";
     currentPaginationPage = 1;
     showLoading();
+
     google.script.run
     .withSuccessHandler(function(res){
 
@@ -614,6 +559,7 @@ function loadJasa(){
     currentMenu="jasa";
     currentPaginationPage = 1;
     showLoading();
+
     google.script.run
     .withSuccessHandler(function(res){
 
@@ -632,6 +578,7 @@ function loadBlacklist(){
     currentMenu="blacklist";
     currentPaginationPage = 1;
     showLoading();
+
     google.script.run
     .withSuccessHandler(function(res){
 
@@ -648,30 +595,22 @@ function loadBlacklist(){
 function loadInfo(){
 
     currentMenu="info";
-
     currentPaginationPage=1;
-
     showLoading();
 
-
     google.script.run
-
     .withSuccessHandler(function(res){
 
         currentData=res.data;
-
         filteredData=[...currentData];
-
 
         renderInfo(filteredData);
 
-
     })
-
     .getWebInfo();
 
-
 }
+
 
 /*=========================================
 CARD GENERATOR
@@ -692,34 +631,26 @@ return `
     <div class="card-body">
 
         <div class="card-title">
-
             ${title}
-
         </div>
 
         <div class="card-info">
-
             ${subtitle}
-
         </div>
 
         <div class="card-price">
-
             ${price}
-
         </div>
 
         <div class="card-action">
 
-    <span class="badge ${status.toLowerCase().replace(/\s+/g,'-')}">
+            <span class="badge ${status.toLowerCase().replace(/\s+/g,'-')}">
+                ${status}
+            </span>
 
-        ${status}
+            ${buyButton}
 
-    </span>
-
-    ${buyButton}
-
-</div>
+        </div>
 
     </div>
 
@@ -728,6 +659,7 @@ return `
 `;
 
 }
+
 
 /*=========================================
 BUY WHATSAPP
@@ -782,80 +714,59 @@ function createBuyButton(menu,namaBarang){
 
 }
 
+
 /*=========================================
 RENDER
 =========================================*/
 
 function renderInfo(data){
 
+    if(data.length===0){
 
-if(data.length===0){
+        document.getElementById("app").innerHTML=
+        '<div class="empty">Belum Ada Informasi KING!!</div>';
 
-document.getElementById("app").innerHTML=
-`
-<div class="empty">
-Belum Ada Informasi KING!!
-</div>
-`;
+        return;
 
-return;
+    }
 
-}
+    const pageData=getPageData(data);
 
+    let html='<div class="grid">';
 
+    pageData.forEach(function(item){
 
-const pageData=getPageData(data);
+        html+=createCard(
 
+            item,
 
+            item.JUDUL_INFO,
 
-let html='<div class="grid">';
+            item.NB,
 
+            "Baca selengkapnya...",
 
+            ""
 
-pageData.forEach(function(item){
+        );
 
+    });
 
-html+=createCard(
+    html+='</div>';
 
-item,
+    html+=getPaginationHTML(data);
 
-item.JUDUL_INFO,
+    document.getElementById("app").innerHTML=html;
 
-item.NB,
+    document.querySelectorAll(".card").forEach(function(card){
 
-"Baca selengkapnya...",
+        card.onclick=function(){
 
-""
+            showInfo(this.dataset.id);
 
-);
+        };
 
-
-});
-
-
-
-html+='</div>';
-
-html+=getPaginationHTML(data);
-
-
-
-document.getElementById("app").innerHTML=html;
-
-
-
-document.querySelectorAll(".card").forEach(function(card){
-
-
-card.onclick=function(){
-
-showInfo(this.dataset.id);
-
-}
-
-
-});
-
+    });
 
 }
 
@@ -914,53 +825,59 @@ function renderAkun(data){
 
 function renderEquipment(data){
 
-  if(data.length===0){
+    if(data.length===0){
+
         document.getElementById("app").innerHTML=
         '<div class="empty">Wadduhh Kosong KING!!🗿🗿🗿</div>';
+
         return;
+
     }
 
-const pageData = getPageData(data);
+    const pageData = getPageData(data);
 
-let html='<div class="grid">';
+    let html='<div class="grid">';
 
-pageData.forEach(function(item){
+    pageData.forEach(function(item){
 
-    html += createCard(
+        html += createCard(
 
-    item,
+            item,
 
-    item.NAMA_ITEM+ ", Lv."+item.LEVEL,
+            item.NAMA_ITEM+ ", Lv."+item.LEVEL,
 
-    item.JOB+" | "+item.TIPE_ITEM,
+            item.JOB+" | "+item.TIPE_ITEM,
 
-    Number(item.PRICE).toLocaleString("id-ID")+" Gold",
+            Number(item.PRICE).toLocaleString("id-ID")+" Gold",
 
-    item.KESIAPAN,
+            item.KESIAPAN,
 
-    createBuyButton("Equip", item.NAMA_ITEM + " Lv."+item.LEVEL+" Harga "+item.PRICE)
+            createBuyButton("Equip", item.NAMA_ITEM + " Lv."+item.LEVEL+" Harga "+item.PRICE)
 
-);
+        );
 
-});
+    });
 
-html += "</div>";
+    html += "</div>";
 
-html += getPaginationHTML(data);
+    html += getPaginationHTML(data);
 
-document.getElementById("app").innerHTML = html;
+    document.getElementById("app").innerHTML = html;
 
 }
 
 function renderMatmed(data){
 
-  if(data.length===0){
+    if(data.length===0){
+
         document.getElementById("app").innerHTML=
         '<div class="empty">Wadduhh Kosong KING!!🗿🗿🗿</div>';
+
         return;
+
     }
 
-const pageData = getPageData(data);
+    const pageData = getPageData(data);
 
     let html='<div class="grid">';
 
@@ -994,13 +911,16 @@ const pageData = getPageData(data);
 
 function renderMutiara(data){
 
-  if(data.length===0){
+    if(data.length===0){
+
         document.getElementById("app").innerHTML=
         '<div class="empty">Wadduhh Kosong KING!!🗿🗿🗿</div>';
+
         return;
+
     }
 
-const pageData=getPageData(data);
+    const pageData=getPageData(data);
 
     let html='<div class="grid">';
 
@@ -1033,14 +953,17 @@ const pageData=getPageData(data);
 }
 
 function renderBatu(data){
-  
-  if(data.length===0){
+
+    if(data.length===0){
+
         document.getElementById("app").innerHTML=
         '<div class="empty">Wadduhh Kosong KING!!🗿🗿🗿</div>';
+
         return;
+
     }
 
-const pageData=getPageData(data);
+    const pageData=getPageData(data);
 
     let html='<div class="grid">';
 
@@ -1075,9 +998,12 @@ const pageData=getPageData(data);
 function renderJasa(data){
 
     if(data.length===0){
+
         document.getElementById("app").innerHTML=
         '<div class="empty">Wadduhh Kosong KING!! | Hubungi Datuk Kalau Mau Sewa Jasa Perantara</div>';
+
         return;
+
     }
 
     const pageData=getPageData(data);
@@ -1149,8 +1075,6 @@ function renderJasa(data){
 
 }
 
-
-
 function renderBlacklist(data){
 
     if(data.length===0){
@@ -1206,7 +1130,6 @@ function renderBlacklist(data){
             <td>
 
                 <button class="btn btn-primary btn-detail"
-
                     data-id="${item.ID}">
 
                     Detail
@@ -1244,7 +1167,6 @@ function renderBlacklist(data){
     });
 
 }
-
 
 
 /*=========================================
@@ -1313,6 +1235,7 @@ function showBlacklist(id){
 
 }
 
+
 /*=========================================
 DETAIL AKUN
 =========================================*/
@@ -1329,7 +1252,7 @@ function showAkun(id){
     padding:60px 20px;
     ">
 
-    <div class="loader"></div>
+    <div class="loader" style="margin:0 auto 20px;"></div>
 
     <h2>Sabar Bentar KING!! 🗿</h2>
 
@@ -1391,80 +1314,66 @@ function showAkun(id){
 
 }
 
+
+/*=========================================
+DETAIL INFO
+=========================================*/
+
 function showInfo(id){
 
+    document.getElementById("modal").style.display="flex";
 
-document.getElementById("modal").style.display="flex";
+    document.getElementById("modalBody").innerHTML=`
 
+    <div class="loading-page">
 
-document.getElementById("modalBody").innerHTML=`
+        <div class="loader"></div>
 
-<div class="loading-page">
+        <h2>Sabar KING</h2>
 
-<div class="loader"></div>
+    </div>
 
-<h2>Sabar KING</h2>
+    `;
 
-</div>
+    google.script.run
 
-`;
+    .withSuccessHandler(function(res){
 
+        const d=res.data;
 
+        document.getElementById("modalBody").innerHTML=`
 
-google.script.run
+        <img src="${d.IMAGE_URL}"
+        style="
+        width:100%;
+        max-height:500px;
+        object-fit:contain;
+        border-radius:12px;
+        margin-bottom:20px;
+        ">
 
-.withSuccessHandler(function(res){
+        <h2>${d.JUDUL_INFO}</h2>
 
+        <br>
 
-const d=res.data;
+        <p>
+        ${d.ISI_INFO}
+        </p>
 
+        <br>
 
+        <small>
+        ${d.NB}
+        </small>
 
-document.getElementById("modalBody").innerHTML=`
+        `;
 
-<img src="${d.IMAGE_URL}"
-style="
-width:100%;
-max-height:500px;
-object-fit:contain;
-border-radius:12px;
-margin-bottom:20px;
-">
+    })
 
-
-<h2>${d.JUDUL_INFO}</h2>
-
-
-<br>
-
-
-<p>
-
-${d.ISI_INFO}
-
-</p>
-
-
-<br>
-
-
-<small>
-
-${d.NB}
-
-</small>
-
-
-`;
-
-
-
-})
-
-.getDetailWebInfo(id);
-
+    .getDetailWebInfo(id);
 
 }
+
 
 /*=========================================
 MODAL
@@ -1485,5 +1394,3 @@ window.onclick=function(e){
     }
 
 }
-
-</script>
