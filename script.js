@@ -9,7 +9,7 @@
  semua kode di bawahnya tidak perlu diubah.
 =========================================*/
 
-const API_URL = "PASTE_URL_WEB_APP_DISINI/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwuVsVrU-RTjERm5wMsgSSicy6W1gOKaNNu7G71rksFDc8dNRSNCjZaScN-Ex_478QW/exec";
 
 function createRunner(onOk, onFail){
 
